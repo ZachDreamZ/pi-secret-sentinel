@@ -52,7 +52,7 @@ Calculates the **Shannon Entropy** of isolated tokens. Strings that exhibit high
 ### 3. False Positive Mitigation
 To prevent disruption, the sentinel filters out:
 - **UUIDs**: `550e8400-e29b-41d4-a716-446655440000`
-- **Paths**: `/home/user/project` or `C:\Users\Vendex\...`
+- **Paths**: `/home/user/project` or `C:\projects\my-app\...`
 - **Placeholders**: `YOUR_API_KEY_HERE`
 
 ## Compatibility
