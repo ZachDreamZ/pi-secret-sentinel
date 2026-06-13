@@ -30,7 +30,7 @@ After installation, the sentinel activates automatically. It monitors every file
 If the agent attempts to write a secret:
 ```typescript
 // Agent tries to write this:
-const apiKey = "sk-abcdefghijklmnopqrstuvwxyz0123456789abcdefghijklmnopqrstuvwxyz";
+const apiKey = "SENSITIVE_SECRET_TOKEN_EXAMPLE_1234567890";
 ```
 
 The sentinel will immediately abort the execution and notify you:
