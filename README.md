@@ -44,7 +44,7 @@ The sentinel will immediately abort the execution and notify you:
 The sentinel operates as a middleware layer using the `tool_execution_start` event:
 
 ### 1. Pattern Matching (Deterministic)
-Matches strings against a library of high-confidence regular expressions for known service tokens (e.g., `ghp_` for GitHub, `sk-` for OpenAI).
+Matches strings against a library of high-confidence regular expressions for known service tokens (e.g., [GitHub](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) or [OpenAI](https://platform.openai.com/docs/guides/production-best-practices/handling-api-keys) prefixes).
 
 ### 2. Entropy Analysis (Probabilistic)
 Calculates the **Shannon Entropy** of isolated tokens. Strings that exhibit high randomness (entropy $> 4.5$) and exceed a minimum length are flagged as potential secrets, catching custom tokens that don't follow a known pattern.
