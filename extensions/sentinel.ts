@@ -6,17 +6,46 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { SecretDetector } from "./detector";
 
+/**
+ * Recursively extracts all string values from an object to avoid scanning keys.
+ */
+function extractValues(obj: any, values: string[] = []) {
+	if (typeof obj === "string") {
+		values.push(obj);
+	} else if (Array.isArray(obj)) {
+		for (const item of obj) {
+			extractValues(item, values);
+		}
+	} else if (obj !== null && typeof obj === "object") {
+		for (const key in obj) {
+			// Target common Pi tool fields specifically
+			if (
+				key === "content" ||
+				key === "newText" ||
+				key === "oldText" ||
+				key === "text"
+			) {
+				extractValues(obj[key], values);
+			} else {
+				extractValues(obj[key], values);
+			}
+		}
+	}
+	return values;
+}
+
 export default function (pi: ExtensionAPI) {
 	const detector = new SecretDetector();
 
 	// Intercept tool execution start
 	pi.on("tool_execution_start", async (event, ctx) => {
+		if (!event || !ctx) return;
 		const { toolName, input } = event;
 
 		// We only care about tools that modify the filesystem
 		if (toolName === "write" || toolName === "edit") {
-			// Secrets can be in the 'content' field (for write) or 'oldText/newText' (for edit)
-			const contentToScan = JSON.stringify(input);
+			const values = extractValues(input);
+			const contentToScan = values.join(" ");
 
 			const result = detector.scan(contentToScan);
 
@@ -28,7 +57,7 @@ export default function (pi: ExtensionAPI) {
 						: "high-entropy random characters";
 
 				// 1. Notify the agent and user with a high-priority error
-				ctx.ui.notify(
+				ctx.ui?.notify(
 					`🔴 SECRET DETECTED: The write operation contains ${reason} (${provider}).\n\n` +
 						`Security Policy: Secrets must not be written to disk. Please use a .env file and reference the value via process.env.`,
 					"error",

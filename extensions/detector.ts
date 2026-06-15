@@ -16,12 +16,13 @@ export class SecretDetector {
 	 * High-confidence patterns for known API key formats.
 	 */
 	private readonly PATTERNS: Record<string, RegExp> = {
-		"GitHub Personal Access Token": /ghp_[a-zA-Z0-9]{36}/,
+		"GitHub Personal Access Token":
+			/ghp_[a-zA-Z0-9]{36}|github_pat_[a-zA-Z0-9_]{50,}/,
 		"OpenAI API Key": /sk-[a-zA-Z0-9]{48}/,
 		"AWS Access Key ID": /AKIA[0-9A-Z]{16}/,
 		"Google API Key": /AIza[0-9A-Za-z-_]{35}/,
 		"Generic Secret/Token":
-			/(api_key|secret|token|password|auth_token)[\s:=]+['"]?([^\s,;="']{16,})['"]?/i,
+			/\b(?:api_key|secret|token|password|auth_token)\b[\s:=]+['"]?([^\s,;="']{12,})['"]?/i,
 		"Private Key": /-----BEGIN (RSA|OPENSSH|EC) PRIVATE KEY-----/,
 	};
 
@@ -33,6 +34,7 @@ export class SecretDetector {
 		/^(\/|[a-zA-Z]:\\).*$/, // Absolute paths
 		/^\.\/.*$/, // Relative paths
 		/YOUR_API_KEY|REPLACE_ME|EXAMPLE_TOKEN/i, // Placeholders
+		/\b[0-9a-f]{64}\b/i, // SHA-256 hashes
 	];
 
 	/**
@@ -55,9 +57,9 @@ export class SecretDetector {
 
 		// 2. Entropy Analysis (Probabilistic)
 		// We split text by common delimiters to find isolated tokens
-		const tokens = text.split(/[\s,;="']+ /);
+		const tokens = text.split(/[\s,;="']+/);
 		for (const token of tokens) {
-			if (token.length < 12) continue;
+			if (token.length < 10) continue;
 			if (this.isFalsePositive(token)) continue;
 
 			const entropy = this.calculateEntropy(token);

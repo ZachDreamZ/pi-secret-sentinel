@@ -87,3 +87,10 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Acknowledgments
 
 - [Pi](https://pi.dev/) - The AI coding agent
+
+## Stability & Verification
+
+This package has undergone a comprehensive security audit and now includes:
+- **Full Test Suite**: 14+ rigorous tests covering pattern detection, entropy, and false positive mitigation.
+- **Robust Tokenization**: Fixed critical splitting bugs to ensure secrets are caught even in dense JSON/config files.
+- **Pi Sandbox Compatible**: Optimized for the Pi extension runtime with safe filesystem access.
