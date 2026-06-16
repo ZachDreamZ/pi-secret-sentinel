@@ -1,6 +1,6 @@
 # pi-secret-sentinel 🛡️
 
-A security middleware extension for [Pi](https://pi.dev/) that intercepts and blocks the writing of sensitive credentials to your codebase.
+**A security middleware extension for [Pi](https://pi.dev/) that intercepts and blocks the writing of sensitive credentials to your codebase.**
 
 [![Pi Package](https://img.shields.io/badge/Pi-Package-blue)](https://pi.dev/packages)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -10,9 +10,12 @@ A security middleware extension for [Pi](https://pi.dev/) that intercepts and bl
 
 - **Real-time Interception**: Blocks `write` and `edit` tool calls before they hit the disk.
 - **Dual-Layer Detection**: Combines high-confidence regex patterns with Shannon Entropy analysis.
-- **Broad Provider Support**: Detects keys for GitHub, OpenAI, AWS, Google Cloud, and more.
+- **Broad Provider Support**: Detects 25+ secret types including GitHub, OpenAI, AWS, Google, Stripe, and more.
 - **Intelligent Filtering**: Automatically ignores UUIDs, local paths, and common placeholders.
-- **Zero-Configuration**: Works out of the box with no setup required.
+- **Passive Mode**: Scans files on read to detect leaked secrets already in the codebase.
+- **Configurable Security**: Adjust entropy thresholds, use whitelists/blacklists, and toggle history tracking.
+- **Scan Statistics**: Track detection history and average scan performance.
+- **Zero-Configuration**: Works out of the box with high-performance defaults.
 - **Compatible** with any Pi-supported model and extension.
 
 ## Installation
@@ -28,6 +31,7 @@ After installation, the sentinel activates automatically. It monitors every file
 ### Example Blocked Operation
 
 If the agent attempts to write a secret:
+
 ```typescript
 // Agent tries to write this:
 const apiKey = "SENSITIVE_SECRET_TOKEN_EXAMPLE_1234567890";
@@ -36,7 +40,7 @@ const apiKey = "SENSITIVE_SECRET_TOKEN_EXAMPLE_1234567890";
 The sentinel will immediately abort the execution and notify you:
 
 > 🔴 **SECRET DETECTED**: The write operation contains a known secret pattern (OpenAI API Key).
-> 
+>
 > **Security Policy**: Secrets must not be written to disk. Please use a `.env` file and reference the value via `process.env`.
 
 ## How It Works
@@ -44,13 +48,17 @@ The sentinel will immediately abort the execution and notify you:
 The sentinel operates as a middleware layer using the `tool_execution_start` event:
 
 ### 1. Pattern Matching (Deterministic)
+
 Matches strings against a library of high-confidence regular expressions for known service tokens (e.g., [GitHub](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/managing-your-personal-access-tokens) or [OpenAI](https://platform.openai.com/docs/guides/production-best-practices/handling-api-keys) prefixes).
 
 ### 2. Entropy Analysis (Probabilistic)
+
 Calculates the **Shannon Entropy** of isolated tokens. Strings that exhibit high randomness (entropy $> 4.5$) and exceed a minimum length are flagged as potential secrets, catching custom tokens that don't follow a known pattern.
 
 ### 3. False Positive Mitigation
+
 To prevent disruption, the sentinel filters out:
+
 - **UUIDs**: `550e8400-e29b-41d4-a716-446655440000`
 - **Paths**: `/home/user/project` or `C:\projects\my-app\...`
 - **Placeholders**: `YOUR_API_KEY_HERE`
@@ -65,9 +73,11 @@ To prevent disruption, the sentinel filters out:
 ## Troubleshooting
 
 ### False Positive
+
 If a legitimate string is being blocked, ensure it doesn't accidentally match a known secret pattern or exhibit extremely high randomness (like a long, random base64 hash).
 
 ### Not Blocking
+
 Ensure the extension is installed and active. Check `pi list` to verify installation.
 
 ## Contributing
@@ -91,6 +101,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 ## Stability & Verification
 
 This package has undergone a comprehensive security audit and now includes:
+
 - **Full Test Suite**: 14+ rigorous tests covering pattern detection, entropy, and false positive mitigation.
 - **Robust Tokenization**: Fixed critical splitting bugs to ensure secrets are caught even in dense JSON/config files.
 - **Pi Sandbox Compatible**: Optimized for the Pi extension runtime with safe filesystem access.

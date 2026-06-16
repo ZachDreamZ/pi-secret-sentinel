@@ -1,12 +1,14 @@
 {
   "name": "pi-secret-sentinel",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "A security middleware for Pi that intercepts and blocks the writing of API keys and secrets to disk.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
     "build": "tsc",
-    "dev": "tsc -w"
+    "test": "jest",
+    "dev": "tsc -w",
+    "prepublishOnly": "npm run build"
   },
   "keywords": [
     "pi",
