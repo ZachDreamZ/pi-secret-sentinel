@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.5.0] - 2026-06-17
+
+### Quality & Tooling Release
+
+#### New Features
+
+- **Logger Utility**: Added structured `logger.ts` with level control (debug/info/warn/error) and consistent formatting.
+- **`scan-stats` Tool**: Registered proper Pi tool to view detection statistics and recent detections.
+
+#### Improvements
+
+- **Console Migration**: All direct `console.log/error/warn` calls replaced with new logger utility.
+- **Performance**: `extractValues` optimized to use `Object.values()` instead of duplicate conditional branches.
+- **Type Safety**: `extractValues` signature updated from `obj: any` to `obj: unknown`.
+- **Configuration**: Added `isolatedModules: true` to `tsconfig.json` to eliminate TS151002 warnings.
+
 ## [0.4.0] - 2026-06-16
 
 ### Major Security Enhancement Release

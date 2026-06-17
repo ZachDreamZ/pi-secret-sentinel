@@ -14,11 +14,13 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import * as fs from "node:fs";
 import * as path from "node:path";
 import { SecretDetector } from "./detector";
+import { logInfo, logWarn, logError, logDebug } from "./logger";
 
 /**
  * Recursively extracts all string values from an object to avoid scanning keys.
+ * Performance: Iterates own enumerable keys, avoids scanning prototype chain.
  */
-function extractValues(obj: any, values: string[] = []) {
+function extractValues(obj: unknown, values: string[] = []): string[] {
 	if (typeof obj === "string") {
 		values.push(obj);
 	} else if (Array.isArray(obj)) {
@@ -26,18 +28,8 @@ function extractValues(obj: any, values: string[] = []) {
 			extractValues(item, values);
 		}
 	} else if (obj !== null && typeof obj === "object") {
-		for (const key in obj) {
-			// Target common Pi tool fields specifically
-			if (
-				key === "content" ||
-				key === "newText" ||
-				key === "oldText" ||
-				key === "text"
-			) {
-				extractValues(obj[key], values);
-			} else {
-				extractValues(obj[key], values);
-			}
+		for (const val of Object.values(obj)) {
+			extractValues(val, values);
 		}
 	}
 	return values;
@@ -90,7 +82,7 @@ export default function (pi: ExtensionAPI) {
 				"error",
 			);
 		} catch (err) {
-			console.error(`[pi-secret-sentinel] Failed to notify: ${(err as Error).message}`);
+			logError(`Failed to notify: ${(err as Error).message}`);
 		}
 	};
 
@@ -138,14 +130,12 @@ export default function (pi: ExtensionAPI) {
 			const result = detector.scan(content);
 
 			if (result.isSecret) {
-				console.warn(
-					`[pi-secret-sentinel] ⚠️ Secret detected in ${filePath}: ${result.provider}`,
-				);
+				logWarn(`⚠️ Secret detected in ${filePath}: ${result.provider}`);
 			}
 
 			return { isSecret: result.isSecret, provider: result.provider };
 		} catch (err) {
-			console.error(`[pi-secret-sentinel] Error scanning ${filePath}: ${(err as Error).message}`);
+			logError(`Error scanning ${filePath}: ${(err as Error).message}`);
 			return null;
 		}
 	};
@@ -178,7 +168,7 @@ export default function (pi: ExtensionAPI) {
 					abortExecution(event, provider);
 				}
 			} catch (err) {
-				console.error(`[pi-secret-sentinel] Error during write scan: ${(err as Error).message}`);
+				logError(`Error during write scan: ${(err as Error).message}`);
 			}
 		}
 
@@ -195,7 +185,30 @@ export default function (pi: ExtensionAPI) {
 		}
 	});
 
-	console.log(
-		"[pi-secret-sentinel] Active. Use the `scan-stats` command to view detection statistics.",
-	);
+	// Register the scan-stats tool
+	pi.registerTool("scan-stats", {
+		description: "View pi-secret-sentinel detection statistics and history.",
+		handler: async () => {
+			const stats = detector.getStats();
+			const history = detector.getHistory();
+			const recent = history.slice(-5).reverse();
+			let result = `## pi-secret-sentinel Stats\n\n`;
+			result += `**Total Scans:** ${stats.totalScans}\n`;
+			result += `**Secrets Detected:** ${stats.secretsDetected}\n`;
+			result += `**Pattern Matches:** ${stats.patternMatches}\n`;
+			result += `**Entropy Matches:** ${stats.entropyMatches}\n`;
+			result += `**Avg Duration:** ${stats.avgDuration.toFixed(2)}ms\n`;
+			if (recent.length > 0) {
+				result += `\n### Recent Detections\n\n`;
+				for (const record of recent) {
+					if (record.result.isSecret) {
+						result += `- ${record.result.provider || "Unknown"} (${new Date(record.timestamp).toLocaleString()})\n`;
+					}
+				}
+			}
+			return result;
+		},
+	});
+
+	logInfo("Active. Use the `scan-stats` command to view detection statistics.");
 }
